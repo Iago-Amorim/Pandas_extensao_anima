@@ -61,6 +61,80 @@ postos_por_municipio_df.rename(columns={"Revenda":"Numero de Postos"}, inplace=T
 print(postos_por_municipio_df)
 print(postos_por_municipio_df.info())
 
-# Calculo de postos por habitante
-postos_por_municipio_df['PostosPorHabitante'] = postos_por_municipio_df['Numero de Postos'] / postos_por_municipio_df['NumHabitantes2021']
+# Calculo de número de Habitantes por posto
+postos_por_municipio_df['Num Habitante Por Postos'] = postos_por_municipio_df['NumHabitantes2021'] / postos_por_municipio_df['Numero de Postos'] 
 print(postos_por_municipio_df)
+
+# Nova tabela
+num_habitante_por_postos_por_municipio_df = postos_por_municipio_df[["Municipio", "Num Habitante Por Postos"]]
+num_habitante_por_postos_por_municipio_df.sort_values('Num Habitante Por Postos', inplace=True)
+print(num_habitante_por_postos_por_municipio_df)
+
+# Biblioteca de gráfico
+import matplotlib.pyplot as plt
+
+# Mostra gráfico
+plt.hist(combustiveis_df['Valor de Venda'])
+plt.show()
+plt.hist(combustiveis_df['Valor de Venda'].mean())
+plt.show()
+
+# Gráfico personalizado
+plt.hist(combustiveis_df['Valor de Venda'])
+plt.title("Preço dos combustiveis Nov/2021")
+plt.xlabel("Preço (em reais)")
+plt.ylabel("Quantidade de Coletas")
+plt.axvline(combustiveis_df['Valor de Venda'].mean(), color="#f00", linestyle='--')
+plt.show()
+
+# Tabela com média de valor de cada combustivel
+c_mean = combustiveis_df['Valor de Venda'].groupby(by=combustiveis_df['Produto']).mean()
+print(c_mean)
+
+# Ajuda no grafico
+import seaborn as sns
+
+# Personalização e formatação do gráfico 
+plt.figure(figsize=(10, 5))
+c_mean_grafico = c_mean.plot(
+    kind="barh",
+    title= "Média Preço por Combustiveis",
+    xlabel="Tipo de Combustivel",
+    ylabel="Preço reais/litro",
+    color="red",
+    alpha = 0.9,
+)
+c_mean_grafico.set_ylabel("Tipo de Combustivel")
+c_mean_grafico.set_xlabel("Preço reais/litro")
+plt.grid(axis="x")
+sns.despine(right=False, bottom=True)
+plt.show()
+
+# Biblioteca para editar e formatar o excel
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill, Font, Color, Alignment
+
+print(c_mean)
+
+# Criar um novo excel
+excel = "por_litro.xlsx"
+c_mean.to_excel(excel, "Sumário")
+
+# Editar e salvar o arquivo excel
+wb = load_workbook(excel)
+ws = wb['Sumário']
+cinzinha = PatternFill("solid", fgColor="CCCCCC")
+caixas = ['A1', 'B1']
+for caixa in caixas:
+  ws[caixa].fill = cinzinha
+# print(ws['A1'].fill.fgColor.rgb)
+# print(ws['A1'].fill)
+MAX_ROW = ws.max_row
+num_linha = 2
+while num_linha <= MAX_ROW:
+  coord = "B{0}".format(num_linha)
+  if ws[coord].value >= 6.5:
+    ws[coord].font = Font(bold=True, color="FF0000")
+  num_linha += 1
+# print(ws['A1'].font)
+wb.save(excel)
